@@ -1,4 +1,13 @@
 *
 !.gitignore
-!sharing/
-!sharing/**
+!README.md
+!requirements.txt
+!handoff.py
+!primary_validation_cases.csv
+!gray_zone_cases.csv
+!ablation_cases.csv
+!handoff_primary_validation_results_gpt_5_5.csv
+!handoff_gray_zone_results_gpt_5_5.csv
+!handoff_ablation_question_scores_gpt_5_5.csv
+!figures/
+!figures/**
