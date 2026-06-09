@@ -94,6 +94,49 @@ Return JSON only:
 }}"""
 
 
+AUTO_TRIAGE_PROMPT = f"""You are HANDOFF, a clinical decision support model assisting with emergency department triage of hand and wrist injuries.
+
+You will be given an emergency department case description. Your first task is
+to decide whether the case contains enough ASSH-relevant information to make a
+clinically defensible triage recommendation. If key information is missing,
+ask focused clarifying questions instead of forcing a final recommendation.
+
+{TRIAGE_OPTIONS}
+
+{ASSH_REFERENCE}
+
+Ask clarifying questions only when the missing information could plausibly
+change the recommendation between options 1, 2, and 3. Do not ask generic
+questions when the case already provides the answer. Once the case contains
+enough information, provide the final recommendation. If the case is clinically
+borderline, make the lower-acuity and higher-acuity interpretations visible.
+
+Return JSON only:
+
+{{
+  "has_enough_information": true,
+  "clarifying_questions": [
+    {{
+      "question": "Focused question needed to make the ASSH triage decision.",
+      "why_it_matters": "How the answer could change the triage recommendation.",
+      "assh_domain": "Short domain label, e.g. vascular status, tendon function, open joint, infection severity."
+    }}
+  ],
+  "triage_recommendation": 1,
+  "triage_recommendation_text": "Does not require hand surgery consultation during the initial emergency department encounter, and may not require hand surgery follow-up.",
+  "is_borderline_triage_case": false,
+  "lower_acuity_interpretation": {{
+    "assh_domain": "Brief guideline domain supporting the lower-acuity interpretation, if applicable.",
+    "supporting_findings": ["Brief clinical finding supporting the lower-acuity interpretation."]
+  }},
+  "higher_acuity_interpretation": {{
+    "assh_domain": "Brief guideline domain supporting the higher-acuity interpretation, if applicable.",
+    "supporting_findings": ["Brief clinical finding supporting the higher-acuity interpretation."]
+  }},
+  "reasoning": "Briefly explain what information was sufficient or missing and the ASSH guideline logic supporting the recommendation or questions."
+}}"""
+
+
 def read_case(args):
     if args.case and args.case_file:
         raise SystemExit("Use either --case or --case-file, not both.")
@@ -154,14 +197,19 @@ def call_openai(api_key, model, prompt, case_text, timeout):
 
 
 def run_handoff(api_key, case_text, mode="triage", model="gpt-5.5", timeout=120):
-    if mode not in {"triage", "missing-info"}:
-        raise ValueError("mode must be 'triage' or 'missing-info'")
+    if mode not in {"triage", "missing-info", "auto"}:
+        raise ValueError("mode must be 'triage', 'missing-info', or 'auto'")
     if not api_key:
         raise ValueError("api_key is required")
     if not case_text or not case_text.strip():
         raise ValueError("case_text is required")
 
-    prompt = TRIAGE_PROMPT if mode == "triage" else MISSING_INFO_PROMPT
+    prompts = {
+        "triage": TRIAGE_PROMPT,
+        "missing-info": MISSING_INFO_PROMPT,
+        "auto": AUTO_TRIAGE_PROMPT,
+    }
+    prompt = prompts[mode]
     response = call_openai(api_key, model, prompt, case_text, timeout)
     return parse_json_object(extract_output_text(response))
 
@@ -170,7 +218,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run HANDOFF hand/wrist ED triage.")
     parser.add_argument("--case", help="Case text to triage.")
     parser.add_argument("--case-file", help="Path to a text file containing the case.")
-    parser.add_argument("--mode", choices=["triage", "missing-info"], default="triage")
+    parser.add_argument("--mode", choices=["triage", "missing-info", "auto"], default="triage")
     parser.add_argument("--model", default="gpt-5.5")
     parser.add_argument("--timeout", type=float, default=120)
     args = parser.parse_args()

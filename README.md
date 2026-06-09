@@ -11,10 +11,16 @@ This repository contains the shared evaluation datasets, HANDOFF outputs, figure
 Use the HANDOFF web app here:
 
 ```text
-https://huggingface.co/spaces/asr2210/assh-handoff
+https://huggingface.co/spaces/arao01/assh-handoff
 ```
 
-The app asks each user to enter their own OpenAI API key. The app does not store the API key or submitted cases locally. Submitted cases are sent to OpenAI using the API key provided by the user, and are governed by that user's OpenAI organization/project settings, data retention controls, and any applicable Business Associate Agreement (BAA). Do not enter PHI unless that setup permits PHI.
+Direct app URL:
+
+```text
+https://arao01-assh-handoff.hf.space
+```
+
+The app asks each user to enter their own OpenAI API key. It runs `gpt-5.5` for consistency with the validation study. HANDOFF first checks whether the case has enough ASSH-relevant detail to make a triage recommendation; if not, it asks focused follow-up questions. The app does not store the API key or submitted cases locally. Submitted cases are sent to OpenAI using the API key provided by the user, and are governed by that user's OpenAI organization/project settings, data retention controls, and any applicable Business Associate Agreement (BAA). Do not enter PHI unless that setup permits PHI.
 
 If the Hugging Face Space has not been created yet, create a new Gradio Space and point it at this repository. Use:
 
@@ -56,6 +62,12 @@ For incomplete cases where HANDOFF should ask clarifying questions:
 
 ```bash
 python3 handoff.py --mode missing-info --case-file case.txt
+```
+
+For the same automatic workflow used by the web app:
+
+```bash
+python3 handoff.py --mode auto --case-file case.txt
 ```
 
 The CLI returns JSON. It is intended for research/prototyping and is not a substitute for clinician judgment.

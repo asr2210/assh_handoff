@@ -5,13 +5,14 @@ This is the default app entrypoint for Hugging Face Spaces. Users provide their
 own OpenAI API key at runtime; keys and cases are not written to disk by the app.
 """
 
-import json
 import urllib.error
 
 import gradio as gr
 
 from handoff import run_handoff
 
+
+MODEL = "gpt-5.5"
 
 PRIVACY_NOTE = (
     "This app does not store the API key or submitted cases locally. Submitted "
@@ -35,71 +36,117 @@ def _recommendation_number(result):
     return result.get("triage_recommendation") or result.get("provisional_triage_recommendation")
 
 
+def _recommendation_heading(rec):
+    headings = {
+        1: "No initial ED hand-surgery consultation usually needed",
+        2: "Outpatient hand-surgery follow-up usually appropriate",
+        3: "Immediate hand-surgery consultation or transfer may be needed",
+    }
+    try:
+        return headings.get(int(rec), "Triage recommendation")
+    except (TypeError, ValueError):
+        return "Triage recommendation"
+
+
+def _as_list(items):
+    return items if isinstance(items, list) else []
+
+
+def _format_questions(questions):
+    lines = []
+    for index, question in enumerate(questions, start=1):
+        item = str(question.get("question", "")).strip()
+        why = str(question.get("why_it_matters", "")).strip()
+        domain = str(question.get("assh_domain", "")).strip()
+        if item:
+            lines.append(f"**{index}. {item}**")
+        if why:
+            lines.append(why)
+        if domain:
+            lines.append(f"ASSH domain: {domain}")
+    return lines
+
+
 def _format_result(result):
     rec = _recommendation_number(result)
+    has_enough = result.get("has_enough_information")
+    questions = _as_list(result.get("clarifying_questions"))
     lines = []
+
+    if has_enough is False and questions:
+        lines.append("## More Information Needed")
+        lines.append(
+            "HANDOFF did not identify enough ASSH-relevant information to make a "
+            "confident triage recommendation. Add answers to the questions below "
+            "to the case description and run HANDOFF again."
+        )
+        lines.append("### Focused Questions")
+        lines.extend(_format_questions(questions))
+        if result.get("reasoning"):
+            lines.append("### Why These Details Matter")
+            lines.append(result["reasoning"])
+        return "\n\n".join(lines)
 
     if rec:
         text = result.get("triage_recommendation_text") or result.get("provisional_triage_recommendation_text", "")
-        lines.append(f"## Recommendation: Category {rec}\n{text}")
+        lines.append(f"## {_recommendation_heading(rec)}")
+        if text:
+            lines.append(text)
 
-    if "is_borderline_triage_case" in result:
-        borderline = "Yes" if result["is_borderline_triage_case"] else "No"
-        lines.append(f"**Borderline triage case:** {borderline}")
+    if result.get("is_borderline_triage_case"):
+        lines.append(
+            "**Borderline triage case:** Yes. HANDOFF identified plausible "
+            "lower- and higher-acuity interpretations."
+        )
 
-    if "has_enough_information" in result:
-        enough = "Yes" if result["has_enough_information"] else "No"
-        lines.append(f"**Enough information for confident triage:** {enough}")
+    if has_enough is True:
+        lines.append("**Information sufficiency:** Enough information was provided for a triage recommendation.")
 
-    questions = result.get("clarifying_questions") or []
     if questions:
-        lines.append("## Clarifying questions")
-        for index, question in enumerate(questions, start=1):
-            item = question.get("question", "")
-            why = question.get("why_it_matters", "")
-            domain = question.get("assh_domain", "")
-            lines.append(f"**{index}. {item}**")
-            if why:
-                lines.append(why)
-            if domain:
-                lines.append(f"_Domain: {domain}_")
+        lines.append("### Remaining Clarifying Questions")
+        lines.append("These are not required before giving the recommendation, but may refine management.")
+        lines.extend(_format_questions(questions))
 
     if result.get("reasoning"):
-        lines.append("## Reasoning")
+        lines.append("### Clinical Reasoning")
         lines.append(result["reasoning"])
 
     lower = result.get("lower_acuity_interpretation") or {}
     higher = result.get("higher_acuity_interpretation") or {}
     if lower or higher:
-        lines.append("## Borderline triage reasoning")
+        lines.append("### Borderline Considerations")
         if lower:
             findings = "; ".join(lower.get("supporting_findings") or [])
-            lines.append(f"**Lower-acuity interpretation:** {lower.get('assh_domain') or lower.get('assh_language') or ''}")
+            domain = lower.get("assh_domain") or lower.get("assh_language") or ""
+            lines.append(f"**Lower-acuity interpretation:** {domain}")
             if findings:
                 lines.append(findings)
         if higher:
             findings = "; ".join(higher.get("supporting_findings") or [])
-            lines.append(f"**Higher-acuity interpretation:** {higher.get('assh_domain') or higher.get('assh_language') or ''}")
+            domain = higher.get("assh_domain") or higher.get("assh_language") or ""
+            lines.append(f"**Higher-acuity interpretation:** {domain}")
             if findings:
                 lines.append(findings)
 
-    return "\n\n".join(lines), json.dumps(result, indent=2, ensure_ascii=False)
+    if not lines:
+        lines.append("HANDOFF returned a response, but it could not be formatted into a recommendation or focused questions.")
+
+    return "\n\n".join(lines)
 
 
-def query_handoff(api_key, case_text, mode_label, model, timeout):
+def query_handoff(api_key, case_text):
     if not api_key or not api_key.strip():
         raise gr.Error("Enter an OpenAI API key.")
     if not case_text or not case_text.strip():
         raise gr.Error("Enter a case description.")
 
-    mode = "triage" if mode_label == "Triage recommendation" else "missing-info"
     try:
         result = run_handoff(
             api_key=api_key.strip(),
             case_text=case_text,
-            mode=mode,
-            model=(model or "gpt-5.5").strip(),
-            timeout=float(timeout or 120),
+            mode="auto",
+            model=MODEL,
+            timeout=120,
         )
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
@@ -121,6 +168,9 @@ with gr.Blocks(title="HANDOFF") as demo:
         """
     )
     gr.Markdown(f"**Privacy / PHI note:** {PRIVACY_NOTE}")
+    gr.Markdown(
+        f"**Model:** HANDOFF currently runs on `{MODEL}`. The model is fixed for consistency with the validation study."
+    )
 
     with gr.Row():
         with gr.Column(scale=1):
@@ -130,13 +180,10 @@ with gr.Blocks(title="HANDOFF") as demo:
                 placeholder="sk-...",
                 info="Used only for this request/session. The app does not store the key.",
             )
-            mode = gr.Radio(
-                ["Triage recommendation", "Ask for missing information"],
-                value="Triage recommendation",
-                label="Mode",
+            gr.Markdown(
+                "HANDOFF first checks whether the case has enough ASSH-relevant detail. "
+                "If not, it asks focused follow-up questions; if yes, it returns the triage recommendation."
             )
-            model = gr.Textbox(label="Model", value="gpt-5.5")
-            timeout = gr.Number(label="Timeout seconds", value=120, precision=0)
         with gr.Column(scale=2):
             case_text = gr.Textbox(
                 label="Case description",
@@ -146,12 +193,11 @@ with gr.Blocks(title="HANDOFF") as demo:
             run_button = gr.Button("Run HANDOFF", variant="primary")
 
     result_markdown = gr.Markdown(label="Result")
-    result_json = gr.Code(label="Raw JSON", language="json")
 
     run_button.click(
         fn=query_handoff,
-        inputs=[api_key, case_text, mode, model, timeout],
-        outputs=[result_markdown, result_json],
+        inputs=[api_key, case_text],
+        outputs=[result_markdown],
     )
 
 
