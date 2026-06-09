@@ -4,7 +4,20 @@ HANDOFF is a research prototype for emergency department triage of hand and wris
 
 This repository contains the shared evaluation datasets, HANDOFF outputs, figure-generation code, and a minimal command-line triage helper.
 
-## Quick Use
+## Web Interface
+
+Run the local Streamlit interface:
+
+```bash
+python3 -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+The interface asks each user to enter their own OpenAI API key. The key is used only for that session's model call and is not written to disk by the app. Cases are sent to the OpenAI API account associated with the key entered by the user.
+
+For PHI-containing use, deploy HANDOFF only in an environment, OpenAI account/project, and institutional agreement that permit PHI.
+
+## Command-Line Use
 
 Set an OpenAI API key and run:
 

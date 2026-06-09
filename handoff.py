@@ -153,6 +153,19 @@ def call_openai(api_key, model, prompt, case_text, timeout):
         return json.loads(response.read().decode("utf-8"))
 
 
+def run_handoff(api_key, case_text, mode="triage", model="gpt-5.5", timeout=120):
+    if mode not in {"triage", "missing-info"}:
+        raise ValueError("mode must be 'triage' or 'missing-info'")
+    if not api_key:
+        raise ValueError("api_key is required")
+    if not case_text or not case_text.strip():
+        raise ValueError("case_text is required")
+
+    prompt = TRIAGE_PROMPT if mode == "triage" else MISSING_INFO_PROMPT
+    response = call_openai(api_key, model, prompt, case_text, timeout)
+    return parse_json_object(extract_output_text(response))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run HANDOFF hand/wrist ED triage.")
     parser.add_argument("--case", help="Case text to triage.")
@@ -167,11 +180,14 @@ def main():
         raise SystemExit("OPENAI_API_KEY is not set.")
 
     case_text = read_case(args)
-    prompt = TRIAGE_PROMPT if args.mode == "triage" else MISSING_INFO_PROMPT
-
     try:
-        response = call_openai(api_key, args.model, prompt, case_text, args.timeout)
-        parsed = parse_json_object(extract_output_text(response))
+        parsed = run_handoff(
+            api_key=api_key,
+            case_text=case_text,
+            mode=args.mode,
+            model=args.model,
+            timeout=args.timeout,
+        )
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         raise SystemExit(f"OpenAI API error: {exc.code} {body}") from exc
