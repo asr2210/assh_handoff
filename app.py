@@ -34,19 +34,16 @@ EXAMPLE_CASE = (
 
 CSS = """
 :root {
-  --handoff-ink: #15201b;
-  --handoff-muted: #5e6b64;
-  --handoff-cream: #f7f1e7;
-  --handoff-card: #fffaf2;
-  --handoff-green: #1f5c45;
-  --handoff-green-dark: #103829;
-  --handoff-line: #ddd1c0;
+  --handoff-ink: #17202a;
+  --handoff-muted: #667085;
+  --handoff-card: #ffffff;
+  --handoff-accent: #2f5f7f;
+  --handoff-line: #e5e7eb;
+  --handoff-soft: #f8fafc;
 }
 
 .gradio-container {
-  background:
-    radial-gradient(circle at top left, rgba(31, 92, 69, 0.14), transparent 34rem),
-    linear-gradient(135deg, #fbf6ed 0%, #efe4d2 100%);
+  background: #ffffff;
   color: var(--handoff-ink);
 }
 
@@ -56,15 +53,15 @@ CSS = """
 }
 
 .handoff-hero {
-  padding: 1.4rem 1.5rem;
+  padding: 1.35rem 1.5rem;
   border: 1px solid var(--handoff-line);
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(239, 228, 210, 0.82));
-  box-shadow: 0 18px 50px rgba(47, 36, 20, 0.10);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
 }
 
 .handoff-eyebrow {
-  color: var(--handoff-green);
+  color: var(--handoff-accent);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -73,7 +70,7 @@ CSS = """
 
 .handoff-hero h1 {
   margin: 0.3rem 0 0.25rem;
-  color: var(--handoff-green-dark);
+  color: var(--handoff-ink);
   font-size: clamp(2.1rem, 5vw, 4.2rem);
   line-height: 0.95;
 }
@@ -86,9 +83,9 @@ CSS = """
 
 .handoff-card {
   border: 1px solid var(--handoff-line);
-  border-radius: 18px;
-  background: rgba(255, 250, 242, 0.94);
-  box-shadow: 0 12px 34px rgba(47, 36, 20, 0.08);
+  border-radius: 14px;
+  background: var(--handoff-card);
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
   padding: 1rem;
 }
 
@@ -98,7 +95,8 @@ CSS = """
 }
 
 .handoff-result {
-  border-left: 6px solid var(--handoff-green);
+  border-left: 5px solid var(--handoff-accent);
+  background: var(--handoff-soft);
 }
 
 """
