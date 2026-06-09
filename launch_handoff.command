@@ -12,5 +12,4 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 python3 -m pip install -r requirements.txt
-python3 -m streamlit run app.py --server.headless false --browser.serverAddress localhost
-
+python3 -m streamlit run app_streamlit.py --server.headless false --browser.serverAddress localhost

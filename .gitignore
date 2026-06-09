@@ -4,6 +4,7 @@
 !requirements.txt
 !handoff.py
 !app.py
+!app_streamlit.py
 !launch_handoff.command
 !launch_handoff.sh
 !primary_validation_cases.csv

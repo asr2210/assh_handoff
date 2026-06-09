@@ -6,6 +6,22 @@ This repository contains the shared evaluation datasets, HANDOFF outputs, figure
 
 ## Web Interface
 
+### Clickable Web App: Hugging Face Spaces
+
+Use the HANDOFF web app here:
+
+```text
+https://huggingface.co/spaces/asr2210/assh-handoff
+```
+
+The app asks each user to enter their own OpenAI API key. The app does not store the API key or submitted cases locally. Submitted cases are sent to OpenAI using the API key provided by the user, and are governed by that user's OpenAI organization/project settings, data retention controls, and any applicable Business Associate Agreement (BAA). Do not enter PHI unless that setup permits PHI.
+
+If the Hugging Face Space has not been created yet, create a new Gradio Space and point it at this repository. Use:
+
+- Space SDK: `Gradio`
+- App file: `app.py`
+- Repository: `https://github.com/asr2210/assh_handoff`
+
 ### Easiest local launch
 
 On macOS, double-click:
@@ -24,10 +40,8 @@ If double-click launch is blocked, run:
 
 ```bash
 python3 -m pip install -r requirements.txt
-streamlit run app.py
+streamlit run app_streamlit.py
 ```
-
-The interface asks each user to enter their own OpenAI API key. The app does not store the API key or submitted cases locally. Submitted cases are sent to OpenAI using the API key provided by the user, and are governed by that user's OpenAI organization/project settings, data retention controls, and any applicable Business Associate Agreement (BAA). Do not enter PHI unless that setup permits PHI.
 
 ## Command-Line Use
 
