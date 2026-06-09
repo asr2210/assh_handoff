@@ -32,6 +32,78 @@ EXAMPLE_CASE = (
 )
 
 
+CSS = """
+:root {
+  --handoff-ink: #15201b;
+  --handoff-muted: #5e6b64;
+  --handoff-cream: #f7f1e7;
+  --handoff-card: #fffaf2;
+  --handoff-green: #1f5c45;
+  --handoff-green-dark: #103829;
+  --handoff-line: #ddd1c0;
+}
+
+.gradio-container {
+  background:
+    radial-gradient(circle at top left, rgba(31, 92, 69, 0.14), transparent 34rem),
+    linear-gradient(135deg, #fbf6ed 0%, #efe4d2 100%);
+  color: var(--handoff-ink);
+}
+
+.handoff-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.handoff-hero {
+  padding: 1.4rem 1.5rem;
+  border: 1px solid var(--handoff-line);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 250, 242, 0.96), rgba(239, 228, 210, 0.82));
+  box-shadow: 0 18px 50px rgba(47, 36, 20, 0.10);
+}
+
+.handoff-eyebrow {
+  color: var(--handoff-green);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.handoff-hero h1 {
+  margin: 0.3rem 0 0.25rem;
+  color: var(--handoff-green-dark);
+  font-size: clamp(2.1rem, 5vw, 4.2rem);
+  line-height: 0.95;
+}
+
+.handoff-hero p {
+  max-width: 760px;
+  color: var(--handoff-muted);
+  font-size: 1.04rem;
+}
+
+.handoff-card {
+  border: 1px solid var(--handoff-line);
+  border-radius: 18px;
+  background: rgba(255, 250, 242, 0.94);
+  box-shadow: 0 12px 34px rgba(47, 36, 20, 0.08);
+  padding: 1rem;
+}
+
+.handoff-note {
+  color: var(--handoff-muted);
+  font-size: 0.94rem;
+}
+
+.handoff-result {
+  border-left: 6px solid var(--handoff-green);
+}
+
+"""
+
+
 def _recommendation_number(result):
     return result.get("triage_recommendation") or result.get("provisional_triage_recommendation")
 
@@ -158,48 +230,63 @@ def query_handoff(api_key, case_text):
 
 
 with gr.Blocks(title="HANDOFF") as demo:
-    gr.Markdown(
-        """
-        # HANDOFF
+    with gr.Column(elem_classes=["handoff-shell"]):
+        gr.Markdown(
+            """
+            <section class="handoff-hero">
+              <div class="handoff-eyebrow">ASSH-guided triage support</div>
+              <h1>HANDOFF</h1>
+              <p>
+                Emergency department decision support for hand and wrist injuries.
+                Paste a case description; HANDOFF will either ask for the missing
+                details it needs or provide a triage recommendation.
+              </p>
+              <p class="handoff-note">
+                Research prototype only. Not a substitute for clinician judgment.
+              </p>
+            </section>
+            """
+        )
 
-        ASSH-guided emergency department triage support for hand and wrist injuries.
+        with gr.Row():
+            with gr.Column(scale=1, elem_classes=["handoff-card"]):
+                gr.Markdown("### Access")
+                gr.Markdown(f"<p class='handoff-note'>{PRIVACY_NOTE}</p>")
+                api_key = gr.Textbox(
+                    label="OpenAI API key",
+                    type="password",
+                    placeholder="sk-...",
+                    info="Used only for this request/session. The app does not store the key.",
+                )
+                gr.Markdown(
+                    """
+                    ### How HANDOFF Works
 
-        HANDOFF is a research prototype and is not a substitute for clinician judgment.
-        """
-    )
-    gr.Markdown(f"**Privacy / PHI note:** {PRIVACY_NOTE}")
-    gr.Markdown(
-        f"**Model:** HANDOFF currently runs on `{MODEL}`. The model is fixed for consistency with the validation study."
-    )
+                    HANDOFF checks whether the case has enough ASSH-relevant detail.
+                    If key details are missing, it asks targeted follow-up questions.
+                    If enough detail is present, it returns the triage recommendation
+                    with concise clinical reasoning.
+                    """
+                )
+            with gr.Column(scale=2, elem_classes=["handoff-card"]):
+                case_text = gr.Textbox(
+                    label="Case description",
+                    lines=14,
+                    placeholder=EXAMPLE_CASE,
+                )
+                run_button = gr.Button("Run HANDOFF", variant="primary")
 
-    with gr.Row():
-        with gr.Column(scale=1):
-            api_key = gr.Textbox(
-                label="OpenAI API key",
-                type="password",
-                placeholder="sk-...",
-                info="Used only for this request/session. The app does not store the key.",
-            )
-            gr.Markdown(
-                "HANDOFF first checks whether the case has enough ASSH-relevant detail. "
-                "If not, it asks focused follow-up questions; if yes, it returns the triage recommendation."
-            )
-        with gr.Column(scale=2):
-            case_text = gr.Textbox(
-                label="Case description",
-                lines=13,
-                placeholder=EXAMPLE_CASE,
-            )
-            run_button = gr.Button("Run HANDOFF", variant="primary")
+        with gr.Column(elem_classes=["handoff-card", "handoff-result"]):
+            gr.Markdown("### Result")
+            result_markdown = gr.Markdown("Enter a case description and click **Run HANDOFF**.")
 
-    result_markdown = gr.Markdown(label="Result")
-
-    run_button.click(
-        fn=query_handoff,
-        inputs=[api_key, case_text],
-        outputs=[result_markdown],
-    )
+        run_button.click(
+            fn=query_handoff,
+            inputs=[api_key, case_text],
+            outputs=[result_markdown],
+            show_progress="full",
+        )
 
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(css=CSS)
