@@ -4,6 +4,8 @@
 !requirements.txt
 !handoff.py
 !app.py
+!launch_handoff.command
+!launch_handoff.sh
 !primary_validation_cases.csv
 !gray_zone_cases.csv
 !ablation_cases.csv

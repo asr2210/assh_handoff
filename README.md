@@ -6,7 +6,21 @@ This repository contains the shared evaluation datasets, HANDOFF outputs, figure
 
 ## Web Interface
 
-Run the local Streamlit interface:
+### Easiest local launch
+
+On macOS, double-click:
+
+```text
+launch_handoff.command
+```
+
+This starts the app and opens a browser window at:
+
+```text
+http://localhost:8501
+```
+
+If double-click launch is blocked, run:
 
 ```bash
 python3 -m pip install -r requirements.txt
