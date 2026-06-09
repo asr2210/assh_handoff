@@ -97,10 +97,12 @@ with st.sidebar:
     timeout = st.number_input("Timeout seconds", min_value=30, max_value=300, value=120, step=10)
 
     st.divider()
-    st.markdown("**Privacy note**")
+    st.markdown("**Privacy / PHI note**")
     st.write(
-        "Cases are sent to the OpenAI API account associated with the key entered here. "
-        "Do not enter PHI unless your deployment, account, and institutional agreements permit it."
+        "This app does not store the API key or submitted cases locally. Submitted cases are sent to "
+        "OpenAI using the API key provided here and are governed by that user's OpenAI organization/"
+        "project settings, data retention controls, and any applicable Business Associate Agreement "
+        "(BAA). Do not enter PHI unless that setup permits PHI."
     )
 
 example = (

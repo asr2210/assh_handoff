@@ -13,9 +13,7 @@ python3 -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The interface asks each user to enter their own OpenAI API key. The key is used only for that session's model call and is not written to disk by the app. Cases are sent to the OpenAI API account associated with the key entered by the user.
-
-For PHI-containing use, deploy HANDOFF only in an environment, OpenAI account/project, and institutional agreement that permit PHI.
+The interface asks each user to enter their own OpenAI API key. The app does not store the API key or submitted cases locally. Submitted cases are sent to OpenAI using the API key provided by the user, and are governed by that user's OpenAI organization/project settings, data retention controls, and any applicable Business Associate Agreement (BAA). Do not enter PHI unless that setup permits PHI.
 
 ## Command-Line Use
 
