@@ -40,6 +40,8 @@ CSS = """
   --handoff-accent: #2f5f7f;
   --handoff-line: #e5e7eb;
   --handoff-soft: #f8fafc;
+  --handoff-warning: #fff8e6;
+  --handoff-warning-line: #f2d08f;
 }
 
 .gradio-container {
@@ -53,7 +55,7 @@ CSS = """
 }
 
 .handoff-hero {
-  padding: 1.35rem 1.5rem;
+  padding: 1.2rem 1.35rem;
   border: 1px solid var(--handoff-line);
   border-radius: 16px;
   background: #ffffff;
@@ -69,16 +71,16 @@ CSS = """
 }
 
 .handoff-hero h1 {
-  margin: 0.3rem 0 0.25rem;
+  margin: 0.25rem 0 0.2rem;
   color: var(--handoff-ink);
-  font-size: clamp(2.1rem, 5vw, 4.2rem);
+  font-size: clamp(2rem, 5vw, 3.6rem);
   line-height: 0.95;
 }
 
 .handoff-hero p {
   max-width: 760px;
   color: var(--handoff-muted);
-  font-size: 1.04rem;
+  font-size: 1rem;
 }
 
 .handoff-card {
@@ -86,17 +88,34 @@ CSS = """
   border-radius: 14px;
   background: var(--handoff-card);
   box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
-  padding: 1rem;
+  padding: 0.95rem;
 }
 
 .handoff-note {
   color: var(--handoff-muted);
+  font-size: 0.92rem;
+}
+
+.handoff-disclosure {
+  border: 1px solid var(--handoff-warning-line);
+  border-radius: 14px;
+  background: var(--handoff-warning);
+  padding: 0.8rem 1rem;
+}
+
+.handoff-disclosure p {
+  margin: 0;
+  color: #624a13;
   font-size: 0.94rem;
 }
 
 .handoff-result {
   border-left: 5px solid var(--handoff-accent);
   background: var(--handoff-soft);
+}
+
+.handoff-compact h3 {
+  margin-top: 0;
 }
 
 """
@@ -236,45 +255,39 @@ with gr.Blocks(title="HANDOFF") as demo:
               <h1>HANDOFF</h1>
               <p>
                 Emergency department decision support for hand and wrist injuries.
-                Paste a case description; HANDOFF will either ask for the missing
-                details it needs or provide a triage recommendation.
+                Paste a case; HANDOFF will ask for missing details or return a
+                triage recommendation.
               </p>
-              <p class="handoff-note">
-                Research prototype only. Not a substitute for clinician judgment.
-              </p>
+            </section>
+            """
+        )
+        gr.Markdown(
+            f"""
+            <section class="handoff-disclosure">
+              <p><strong>Important disclosure:</strong> HANDOFF is a research prototype and is not a substitute for clinician judgment. {PRIVACY_NOTE}</p>
             </section>
             """
         )
 
         with gr.Row():
-            with gr.Column(scale=1, elem_classes=["handoff-card"]):
+            with gr.Column(scale=1, elem_classes=["handoff-card", "handoff-compact"]):
                 gr.Markdown("### Access")
-                gr.Markdown(f"<p class='handoff-note'>{PRIVACY_NOTE}</p>")
                 api_key = gr.Textbox(
                     label="OpenAI API key",
                     type="password",
                     placeholder="sk-...",
                     info="Used only for this request/session. The app does not store the key.",
                 )
-                gr.Markdown(
-                    """
-                    ### How HANDOFF Works
-
-                    HANDOFF checks whether the case has enough ASSH-relevant detail.
-                    If key details are missing, it asks targeted follow-up questions.
-                    If enough detail is present, it returns the triage recommendation
-                    with concise clinical reasoning.
-                    """
-                )
-            with gr.Column(scale=2, elem_classes=["handoff-card"]):
+            with gr.Column(scale=2, elem_classes=["handoff-card", "handoff-compact"]):
+                gr.Markdown("### Case")
                 case_text = gr.Textbox(
                     label="Case description",
-                    lines=14,
+                    lines=12,
                     placeholder=EXAMPLE_CASE,
                 )
                 run_button = gr.Button("Run HANDOFF", variant="primary")
 
-        with gr.Column(elem_classes=["handoff-card", "handoff-result"]):
+        with gr.Column(elem_classes=["handoff-card", "handoff-result", "handoff-compact"]):
             gr.Markdown("### Result")
             result_markdown = gr.Markdown("Enter a case description and click **Run HANDOFF**.")
 
